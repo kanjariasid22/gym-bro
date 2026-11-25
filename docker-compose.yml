@@ -1,0 +1,19 @@
+# GymBro Compose stub — fleshed out in slice 22 (Docker + EC2 deploy)
+
+services:
+  api:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    volumes:
+      - ./data:/app/data
+    # command set in backend/Dockerfile
+
+  web:
+    build: ./frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - api
