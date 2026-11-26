@@ -5,21 +5,20 @@ from app.database import get_db
 from app.deps import get_current_user
 from app.domain import programs as program_domain
 from app.models import User
-from app.schemas import ProgramOut, ProgramPut
+from app.schemas import ProgramOut, ProgramPut, ProgramSummaryOut
 
-router = APIRouter(prefix="/program", tags=["program"])
+router = APIRouter(tags=["program"])
 
 
-@router.get("", response_model=ProgramOut | None)
+@router.get("/program", response_model=ProgramOut | None)
 def get_program(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ) -> ProgramOut | None:
-    prog = program_domain.get_current_program(db, user.id)
-    return prog
+    return program_domain.get_current_program(db, user.id)
 
 
-@router.put("", response_model=ProgramOut)
+@router.put("/program", response_model=ProgramOut)
 def put_program(
     payload: ProgramPut,
     db: Session = Depends(get_db),
@@ -32,3 +31,20 @@ def put_program(
             detail="Failed to save program",
         )
     return prog
+
+
+@router.get("/programs", response_model=list[ProgramSummaryOut])
+def list_programs(
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+) -> list[ProgramSummaryOut]:
+    return program_domain.list_programs(db, user.id)
+
+
+@router.get("/programs/{program_id}", response_model=ProgramOut)
+def get_program_by_id(
+    program_id: int,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+) -> ProgramOut:
+    return program_domain.get_program_detail(db, user.id, program_id)

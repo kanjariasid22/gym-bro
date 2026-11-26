@@ -33,6 +33,11 @@ class SessionStatus(str, enum.Enum):
     cancelled = "cancelled"
 
 
+class ProgramStatus(str, enum.Enum):
+    active = "active"
+    archived = "archived"
+
+
 class ChatRole(str, enum.Enum):
     user = "user"
     assistant = "assistant"
@@ -68,6 +73,9 @@ class Program(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    status: Mapped[str] = mapped_column(
+        String(20), default=ProgramStatus.active.value, nullable=False, index=True
+    )
     goals: Mapped[str | None] = mapped_column(Text, nullable=True)
     end_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -80,6 +88,7 @@ class Program(Base):
         onupdate=func.now(),
         nullable=False,
     )
+    archived_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     user: Mapped[User] = relationship(back_populates="programs")
     days: Mapped[list[ProgramDay]] = relationship(
@@ -140,6 +149,8 @@ class WorkoutSession(Base):
     )
     ended_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     summary: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Session-local Trainer swaps: JSON map normalized_key -> {raw_name, canonical_name, normalized_key}
+    plan_overrides_json: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     user: Mapped[User] = relationship(back_populates="sessions")
     set_logs: Mapped[list[SetLog]] = relationship(

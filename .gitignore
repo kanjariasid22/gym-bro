@@ -1,6 +1,4 @@
 # Env / secrets
-.env
-.env.local
 .env.*.local
 
 # Python
@@ -31,7 +29,6 @@ data/
 
 # IDE / OS
 .idea/
-.vscode/
 *.swp
 .DS_Store
 Thumbs.db
@@ -40,3 +37,4 @@ Thumbs.db
 *.log
 .cache/
 coverage/
+config.bat

@@ -82,12 +82,24 @@ class ProgramDayOut(OrmModel):
 
 class ProgramOut(OrmModel):
     id: int
+    status: str
     goals: str | None
     end_date: date | None
     notes: str | None
     created_at: datetime
     updated_at: datetime
+    archived_at: datetime | None = None
     days: list[ProgramDayOut]
+
+
+class ProgramSummaryOut(OrmModel):
+    id: int
+    status: str
+    goals: str | None
+    end_date: date | None
+    created_at: datetime
+    updated_at: datetime
+    archived_at: datetime | None = None
 
 
 # --- Sessions / sets ---

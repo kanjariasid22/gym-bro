@@ -1,35 +1,79 @@
-"""Program CRUD domain."""
+"""Program CRUD domain — archive-on-upsert, one active per user."""
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
+
+from fastapi import HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
 from app.domain.exercises import normalize_key, resolve_exercise_name, title_case_fallback
-from app.models import PlannedExercise, Program, ProgramDay
+from app.models import PlannedExercise, Program, ProgramDay, ProgramStatus
 from app.schemas import ProgramPut
+
+
+def _with_days():
+    return selectinload(Program.days).selectinload(ProgramDay.exercises)
 
 
 def get_current_program(db: Session, user_id: int) -> Program | None:
     return db.scalar(
         select(Program)
-        .options(
-            selectinload(Program.days).selectinload(ProgramDay.exercises),
+        .options(_with_days())
+        .where(
+            Program.user_id == user_id,
+            Program.status == ProgramStatus.active.value,
         )
-        .where(Program.user_id == user_id)
         .order_by(Program.updated_at.desc())
     )
 
 
+def list_programs(db: Session, user_id: int) -> list[Program]:
+    return list(
+        db.scalars(
+            select(Program)
+            .where(Program.user_id == user_id)
+            .order_by(Program.created_at.desc())
+        ).all()
+    )
+
+
+def get_program_detail(db: Session, user_id: int, program_id: int) -> Program:
+    prog = db.scalar(
+        select(Program)
+        .options(_with_days())
+        .where(Program.id == program_id, Program.user_id == user_id)
+    )
+    if prog is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Program not found")
+    return prog
+
+
+def _archive_active(db: Session, user_id: int) -> None:
+    now = datetime.now(timezone.utc)
+    actives = list(
+        db.scalars(
+            select(Program).where(
+                Program.user_id == user_id,
+                Program.status == ProgramStatus.active.value,
+            )
+        ).all()
+    )
+    for prog in actives:
+        prog.status = ProgramStatus.archived.value
+        prog.archived_at = now
+        prog.updated_at = now
+
+
 def upsert_program(db: Session, user_id: int, payload: ProgramPut) -> Program:
-    """Replace the user's current plan (delete previous programs for simplicity in v1)."""
-    existing = list(db.scalars(select(Program).where(Program.user_id == user_id)).all())
-    for prog in existing:
-        db.delete(prog)
+    """Archive current active program (if any), then insert a new active program."""
+    _archive_active(db, user_id)
     db.flush()
 
     program = Program(
         user_id=user_id,
+        status=ProgramStatus.active.value,
         goals=payload.goals,
         end_date=payload.end_date,
         notes=payload.notes,

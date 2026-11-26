@@ -18,6 +18,11 @@ class Settings(BaseSettings):
     )
 
     groq_api_key: str = ""
+    # Prefer Qwen on Groq for structured JSON; gpt-oss often emits native tool calls
+    groq_model: str = "qwen/qwen3.8-27b"
+    groq_fast_model: str = "qwen/qwen3.8-27b"
+    # Optional: enables full Cognis hybrid embeddings; without it we use local Groq memory
+    gemini_api_key: str = ""
     jwt_secret: str = Field(default="dev-only-change-me")
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 60 * 24 * 7  # 7 days
@@ -26,6 +31,7 @@ class Settings(BaseSettings):
     memory_data_dir: str = "./data/memory"
 
     cors_origins: str = "http://localhost:5173,http://localhost:3000"
+    chat_rate_limit_per_minute: int = 30
 
     @property
     def cors_origin_list(self) -> list[str]:

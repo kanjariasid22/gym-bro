@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { api, type WorkoutSession } from '../api'
+import { AppNav } from '../components/AppNav'
 
 export function HistoryPage() {
   const [sessions, setSessions] = useState<WorkoutSession[]>([])
@@ -18,14 +19,9 @@ export function HistoryPage() {
 
   return (
     <div className="shell">
-      <header className="topbar">
-        <div className="brand">GymBro</div>
-        <nav>
-          <Link to="/">Chat</Link>
-        </nav>
-      </header>
+      <AppNav />
       <main className="history">
-        <h1>History</h1>
+        <h1>Workout history</h1>
         {error && <p className="error">{error}</p>}
         {sessions.length === 0 && !error && <p className="muted">No sessions yet.</p>}
         <ul className="history-list">

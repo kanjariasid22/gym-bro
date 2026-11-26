@@ -4,6 +4,9 @@ import { useAuth } from './AuthContext'
 import { ChatPage } from './pages/ChatPage'
 import { HistoryPage } from './pages/HistoryPage'
 import { LoginPage } from './pages/LoginPage'
+import { PlanDetailPage } from './pages/PlanDetailPage'
+import { PlanHistoryPage } from './pages/PlanHistoryPage'
+import { PlanPage } from './pages/PlanPage'
 import { RegisterPage } from './pages/RegisterPage'
 import { SessionDetailPage } from './pages/SessionDetailPage'
 
@@ -45,6 +48,30 @@ export default function App() {
         element={
           <Protected>
             <ChatPage />
+          </Protected>
+        }
+      />
+      <Route
+        path="/plan"
+        element={
+          <Protected>
+            <PlanPage />
+          </Protected>
+        }
+      />
+      <Route
+        path="/plan/history"
+        element={
+          <Protected>
+            <PlanHistoryPage />
+          </Protected>
+        }
+      />
+      <Route
+        path="/plan/:id"
+        element={
+          <Protected>
+            <PlanDetailPage />
           </Protected>
         }
       />

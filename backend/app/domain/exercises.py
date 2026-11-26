@@ -94,7 +94,7 @@ def _groq_canonicalize(raw: str) -> str | None:
                 "Content-Type": "application/json",
             },
             json={
-                "model": "llama-3.1-8b-instant",
+                "model": get_settings().groq_fast_model or "openai/gpt-oss-20b",
                 "messages": [
                     {"role": "system", "content": "You normalize exercise names. JSON only."},
                     {"role": "user", "content": prompt},

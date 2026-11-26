@@ -1,12 +1,14 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
+from app.agents.graph import run_handoff_after_complete
 from app.database import get_db
 from app.deps import get_current_user
 from app.domain import sessions as session_domain
 from app.domain import sets as set_domain
 from app.models import User
+from app.rate_limit import check_rate_limit, client_key
 from app.schemas import SessionDetailOut, SessionOut, SetCreate, SetLogOut
 
 router = APIRouter(prefix="/sessions", tags=["sessions"])
@@ -14,6 +16,12 @@ router = APIRouter(prefix="/sessions", tags=["sessions"])
 
 class CompleteBody(BaseModel):
     summary: str | None = None
+    run_handoff: bool = True
+
+
+class CompleteResponse(BaseModel):
+    session: SessionOut
+    handoff: dict | None = None
 
 
 @router.post("/start", response_model=SessionOut, status_code=201)
@@ -24,15 +32,22 @@ def start_session(
     return session_domain.start_workout(db, user.id)
 
 
-@router.post("/{session_id}/complete", response_model=SessionOut)
+@router.post("/{session_id}/complete", response_model=CompleteResponse)
 def complete_session(
     session_id: int,
+    request: Request,
     body: CompleteBody | None = None,
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
-) -> SessionOut:
+) -> CompleteResponse:
     summary = body.summary if body else None
-    return session_domain.complete_workout(db, user.id, session_id, summary)
+    run_handoff = body.run_handoff if body else True
+    session = session_domain.complete_workout(db, user.id, session_id, summary)
+    handoff = None
+    if run_handoff:
+        check_rate_limit(client_key(request, user.id))
+        handoff = run_handoff_after_complete(db, user, session_id)
+    return CompleteResponse(session=session, handoff=handoff)
 
 
 @router.post("/{session_id}/cancel", response_model=SessionOut)

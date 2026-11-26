@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 
 from app.config import get_settings
+from app.memory import memory_backend
 
 router = APIRouter(tags=["ops"])
 
@@ -11,4 +12,5 @@ def health() -> dict:
     return {
         "status": "ok",
         "groq_configured": settings.groq_configured,
+        "memory_backend": memory_backend(),
     }

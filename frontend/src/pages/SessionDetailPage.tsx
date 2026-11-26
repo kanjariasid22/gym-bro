@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { api, type SessionDetail, type SetLog, type Unit } from '../api'
+import { AppNav } from '../components/AppNav'
 
 export function SessionDetailPage() {
   const { id } = useParams()
@@ -51,13 +52,11 @@ export function SessionDetailPage() {
 
   return (
     <div className="shell">
-      <header className="topbar">
-        <div className="brand">GymBro</div>
-        <nav>
-          <Link to="/history">← History</Link>
-        </nav>
-      </header>
+      <AppNav />
       <main className="history">
+        <p>
+          <Link to="/history">← Workout history</Link>
+        </p>
         <h1>Session #{sessionId}</h1>
         {detail && (
           <p className="muted">
